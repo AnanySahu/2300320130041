@@ -8,20 +8,20 @@ const PORT = 3000;
 // Your actual token
 const TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiYXVkIjoiaHR0cDovLzIwLjI0NC41Ni4xNDQvZXZhbHVhdGlvbi1zZXJ2aWNlIiwiZW1haWwiOiJhbmFueS4yM2IwMTMxMTE1QGFiZXMuYWMuaW4iLCJleHAiOjE3ODA5OTMwOTMsImlhdCI6MTc4MDk5MjE5MywiaXNzIjoiQWZmb3JkIE1lZGljYWwgVGVjaG5vbG9naWVzIFByaXZhdGUgTGltaXRlZCIsImp0aSI6IjNiNWY3NGJmLWE3MDAtNGM0MS04Y2YxLWIyODk3ZmUxMjUyOSIsImxvY2FsZSI6ImVuLUlOIiwibmFtZSI6ImFuYW55IHNhaHUiLCJzdWIiOiI4MTYyMjgxOC0xYmMyLTRmNzYtYjUxMy1hOGU5YjY0N2NiMjgifSwiZW1haWwiOiJhbmFueS4yM2IwMTMxMTE1QGFiZXMuYWMuaW4iLCJuYW1lIjoiYW5hbnkgc2FodSIsInJvbGxObyI6IjIzMDAzMjAxMzAwNDEiLCJhY2Nlc3NDb2RlIjoiY1h1cWh0IiwiY2xpZW50SUQiOiI4MTYyMjgxOC0xYmMyLTRmNzYtYjUxMy1hOGU5YjY0N2NiMjgiLCJjbGllbnRTZWNyZXQiOiJQWkVGUU14dVhZR2NSbVBoIn0.3RZUVbilEPFIRVv9fc0vRiwF2lFVfWlUCrZks6By9tg';
 
-// Test server APIs
+
 const DEPOT_API = 'http://4.224.186.213/evaluation-service/depots';
 const VEHICLES_API = 'http://4.224.186.213/evaluation-service/vehicles';
 
-// Middleware
+
 app.use(express.json());
 
-// Log incoming requests
+
 app.use(async (req, res, next) => {
     await Log('backend', 'info', 'middleware', `Incoming ${req.method} request to ${req.path}`);
     next();
 });
 
-// 0/1 Knapsack solver
+
 function solveKnapsack(vehicles, mechanicHours) {
     const n = vehicles.length;
     const dp = Array(n + 1).fill().map(() => Array(mechanicHours + 1).fill(0));
@@ -39,7 +39,7 @@ function solveKnapsack(vehicles, mechanicHours) {
         }
     }
     
-    // Find selected vehicles
+   
     let remaining = mechanicHours;
     const selected = [];
     for (let i = n; i > 0 && remaining > 0; i--) {
@@ -56,7 +56,7 @@ function solveKnapsack(vehicles, mechanicHours) {
     };
 }
 
-// Endpoint 1: Get all depots
+
 app.get('/depots', async (req, res) => {
     const startTime = Date.now();
     await Log('backend', 'info', 'controller', 'GET /depots called');
@@ -84,7 +84,7 @@ app.get('/depots', async (req, res) => {
     }
 });
 
-// Endpoint 2: Get optimal schedule for specific depot
+
 app.get('/schedule/:depotId', async (req, res) => {
     const startTime = Date.now();
     const { depotId } = req.params;
@@ -92,7 +92,7 @@ app.get('/schedule/:depotId', async (req, res) => {
     await Log('backend', 'info', 'controller', `GET /schedule/${depotId} called`);
     
     try {
-        // Fetch depots and vehicles
+       
         const [depotsRes, vehiclesRes] = await Promise.all([
             axios.get(DEPOT_API, { headers: { 'Authorization': TOKEN } }),
             axios.get(VEHICLES_API, { headers: { 'Authorization': TOKEN } })
@@ -104,7 +104,7 @@ app.get('/schedule/:depotId', async (req, res) => {
             return res.status(404).json({ success: false, error: 'Depot not found' });
         }
         
-        // Map vehicles with correct field names (capital D and I)
+       
         const vehicles = vehiclesRes.data.vehicles.map(v => ({
             taskId: v.TaskID,
             duration: v.Duration,
@@ -139,7 +139,7 @@ app.get('/schedule/:depotId', async (req, res) => {
     }
 });
 
-// Endpoint 3: Custom optimization with custom hours
+
 app.post('/optimize', async (req, res) => {
     const startTime = Date.now();
     const { mechanicHours } = req.body;
@@ -156,7 +156,7 @@ app.post('/optimize', async (req, res) => {
             headers: { 'Authorization': TOKEN }
         });
         
-        // Map vehicles with correct field names (capital D and I)
+        
         const vehicles = vehiclesRes.data.vehicles.map(v => ({
             taskId: v.TaskID,
             duration: v.Duration,
@@ -190,7 +190,7 @@ app.post('/optimize', async (req, res) => {
     }
 });
 
-// Debug endpoint
+
 app.get('/debug/vehicles', async (req, res) => {
     try {
         const response = await axios.get(VEHICLES_API, {
@@ -207,13 +207,13 @@ app.get('/debug/vehicles', async (req, res) => {
     }
 });
 
-// Health check endpoint
+
 app.get('/health', async (req, res) => {
     await Log('backend', 'debug', 'controller', 'Health check called');
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Start server
+
 app.listen(PORT, async () => {
     await Log('backend', 'info', 'service', `Vehicle scheduler API running on port ${PORT}`);
     console.log(`Server running on http://localhost:${PORT}`);
